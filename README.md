@@ -1,0 +1,105 @@
+# jenkins-android
+jenkins for android
+
+
+
+
+### 1、下载[Jenkins](http://mirrors.jenkins.io/war-stable/latest/)
+直接下载.war文件，配置环境变量`JENKINS_HOME`，方便统一管理后期生成的文件，文件会在`JENKINS_HOME`下生成
+
+
+`JENKINS_HOME=C:\app\Jenkins`
+
+请忽略jenkins.msi,这是Win安装版
+
+
+### 2、配置Tomcat
+利用Tomcat分目录部署，复制jenkins.war到自定义的Tomcat根目录\webapp下
+
+
+![](/assets/jenkins-2.png)
+
+
+### 3、启动Tomcat
+
+`tomcat.bat`启动Tomcat，完成后浏览器输入`http://localhost:8080/jenkins`安装插件，选择默认`Install suggested plugins`等待安装成功。如启动失败，尝试启动另一个Tomcat实例后再次启动Jenkins Tomcat实例
+
+![](/assets/jenkins-1.png)
+
+###	4、配置Jenkins
+插件安装完成会提示输入密钥、新建账号等输入完成进入下图页面
+
+
+
+![](/assets/jenkins-3.png)
+
+Manage Jenkins-->Global Tool Configuration
+
+*	配置JDK `别名` `JAVA_HOME` `JDK安装目录`
+*	配置Git	`name` `Path to Git executable` 选择 `Git安装目录\cmd\git.exe`
+*	配置Gradle `name` `GRADLE_HOME`  `xxuser\.gradle\wrapper\dis\gradle-5.1.1-all\xxx\gradle-5.1.1`
+* 	保存
+
+### 5、新建任务
+
+完成JDK,Git,Gradle配置后接下来新建任务
+
+* 	输入一个任务名称
+*	选择构建一个多配置项目
+*	`General` 标签输入`描述`,勾选`GitHub项目`,填写`项目 URL`
+*	`源码管理` 标签勾选`Git`,Repositories URL 填写`项目 URL`,Credentials 添加凭据，输入GitHub`用户名` `密码`
+*	`构建` 标签选择`Invoke Gradle script`,Task 输入 `clean assembleRelease`
+*	保存
+
+
+完成后自动返回到任务列表
+
+### 6、Android项目`build.gradle`
+*	新建签名文件
+* 	build.gradle 增加 buildType `release` 增加`signingConfigs release`
+
+
+```
+signingConfigs{
+	release{
+		storeFile file("../xxx.jks")
+		storePassword "xxx";
+		keyAlias "key0"
+		keyPassword "xxx"
+	
+	}
+}
+
+buildTypes{
+	release{
+		signingconfig signingConfigs.release
+	}
+}
+
+```
+
+### 7、开始构建
+第5步的任务列表右侧按钮开始构建,构建完成后选择当前任务的工作空间，apk文件在app\build文件夹下
+
+### 8、参数化构建
+
+* 	任务列表，选择当前任务，选择配置，General标签下 勾选 `This project is parameterized`
+*	选择`Choice Parameter` 增加 VERSION_CODE 
+*	gradle.properties 增加 VERSION_CODE=1.1参数
+*	build.gradle 增加如下代码实现参数注入
+```
+ android.applicationVariants.all { variant ->
+        variant.outputs.all {
+            outputFileName = "${variant.name}-${VERSION_CODE}.apk"
+        }
+    }
+```
+*	开始构建，点击任务列表右侧构建按钮，会出现`需要如下参数用于构建项目` 选择你要配置的版本号，开始构建。
+
+
+
+
+
+
+
+
