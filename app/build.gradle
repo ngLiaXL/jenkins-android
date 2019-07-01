@@ -1,5 +1,4 @@
 apply plugin: 'com.android.application'
-
 android {
     compileSdkVersion 29
     buildToolsVersion "29.0.0"
@@ -38,6 +37,12 @@ android {
         }
 
     }
+    applicationVariants.all { variant ->
+        variant.outputs.all {
+            outputFileName = "${variant.name}-${VERSION_CODE}.apk"
+        }
+    }
+
 }
 
 dependencies {
